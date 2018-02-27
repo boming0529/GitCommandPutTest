@@ -9,6 +9,14 @@
     @include Bottom_line_contorl();
 }
 
-// .s_matrix_text table {
-
-// }
+.s_matrix_text table {
+    th {
+        word-wrap: break-word;
+        word-break: break-all;
+    }
+    
+    td {
+        word-wrap: break-word;
+        word-break: break-all;
+    }
+}

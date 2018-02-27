@@ -14,7 +14,7 @@ class SurveyExtends(models.Model):
     description_question = fields.Html('Content_question', sanitize=False)
 
     @api.multi
-    def override_render_description(self, question_id, answer_tag, answer):
+    def override_render_description(self, question_id, answer_tag, answer, IsPrint):
         """Re-render the HTML of the description
         Decorators:
             api.multi
@@ -22,6 +22,7 @@ class SurveyExtends(models.Model):
             question_id {[int]} -- current question id
             answer_tag {[string]} -- mapping current input name
             answer {[dict]} -- mapping current input value
+            IsPrint {[boolean]} -- Is Print pdf or not
         Returns:
             [string] -- return Html string
         """
@@ -51,11 +52,19 @@ class SurveyExtends(models.Model):
             for row_label in question.labels_ids_2:
                 for col_label in answer['%s_%s' % (answer_tag, row_label.id)]:
                     soup.find('input',
-                              {'name': '%s_%s' % (answer_tag, row_label.id) if
-                               question.matrix_subtype == 'simple' else
-                               '%s_%s_%s' % (
-                                   answer_tag, row_label.id, col_label),
+                              {'name': '%s_%s' % (answer_tag, row_label.id) if \
+                               question.matrix_subtype == 'simple' else \
+                               '%s_%s_%s' % (answer_tag, row_label.id, col_label),
                                'value': col_label})['checked'] = 'checked'
+        if question.type == "matrix_text":
+            for row_label in question.labels_ids_2:
+                for col_label in question.labels_ids:
+                    string = str(answer['%s_% s_%s' % (
+                        answer_tag, row_label.id, col_label.id)][0]) if \
+                        '%s_% s_%s' % (answer_tag, row_label.id, col_label.id) in answer else ''
+                    soup.find('',
+                              {'name': '%s_%s_%s' % (answer_tag, row_label.id, col_label.id)}).parent.string = string
+
         return soup
 
     @api.multi
