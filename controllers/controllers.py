@@ -1,13 +1,24 @@
 # -*- coding: utf-8 -*-
-from openerp import SUPERUSER_ID
 from openerp import http
 from openerp.addons.web.http import request
 
 
 class SurveyExtend(http.Controller):
+    """extend survey feature"""
 
-    @http.route(['/survey_extend/print/<model("survey.survey"):survey>', '/survey_extend/print/<model("survey.survey"):survey>/<string:token>'], type='http', auth="public", website=True)
+    @http.route(['/survey_extend/print/<model("survey.survey"):survey>',
+                 '/survey_extend/print/<model("survey.survey"):survey>/<string:token>'],
+                type='http', auth="public", website=True)
     def view(self, survey, token=None, **post):
+        """print survey to pdf
+        Arguments:
+            survey {[model]} -- survey.survey model
+            **post {[dict]} -- other parameter
+        Keyword Arguments:
+            token {[string]} -- token for this user_line (default: {None})
+        Returns:
+            [application/pdf] -- print pdf or http status code 404
+        """
         if survey:
             if token:
                 user_input = survey.user_input_ids.search(
