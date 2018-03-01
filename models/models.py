@@ -52,9 +52,10 @@ class SurveyExtends(models.Model):
             for row_label in question.labels_ids_2:
                 for col_label in answer['%s_%s' % (answer_tag, row_label.id)]:
                     soup.find('input',
-                              {'name': '%s_%s' % (answer_tag, row_label.id) if \
-                               question.matrix_subtype == 'simple' else \
-                               '%s_%s_%s' % (answer_tag, row_label.id, col_label),
+                              {'name': '%s_%s' % (answer_tag, row_label.id) if
+                               question.matrix_subtype == 'simple' else
+                               '%s_%s_%s' % (
+                                   answer_tag, row_label.id, col_label),
                                'value': col_label})['checked'] = 'checked'
         if question.type == "matrix_text":
             for row_label in question.labels_ids_2:
@@ -62,9 +63,14 @@ class SurveyExtends(models.Model):
                     string = str(answer['%s_% s_%s' % (
                         answer_tag, row_label.id, col_label.id)][0]) if \
                         '%s_% s_%s' % (answer_tag, row_label.id, col_label.id) in answer else ''
-                    soup.find('',
-                              {'name': '%s_%s_%s' % (answer_tag, row_label.id, col_label.id)}).parent.string = string
-
+                    parent = soup.find('',
+                                       {'name': '%s_%s_%s' % (answer_tag, row_label.id, col_label.id)}).parent
+                    parent.string = string
+                    width = soup.find('th', {'data-id': col_label.id})['style'] if \
+                        soup.find('th', {'data-id': col_label.id}) else ''
+                    print(parent)
+                    print(width)
+                    parent['style'] = "word-break: break-all; %s" % width
         return soup
 
     @api.multi

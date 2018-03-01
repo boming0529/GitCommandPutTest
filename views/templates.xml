@@ -59,6 +59,7 @@
                     <t t-set="quizz_correction" t-value="True if survey.quizz_mode and token else False"/>
                     <t t-set="pdf_print" t-value="True"/>
                     <t t-set="ret" t-value="user_inputs.get_the_answer(token)"/>
+                    <t t-set="is_pdf" t-value="True"/>
                     <div class="page container-fluid">
                         <!-- <script>function test() { var ele = document.getElementById('demo'); ele.innerHTML += 'howdy !!'; } new test();</script><style>#demo { color : limegreen; }</style><div id="demo" onload="test()">michael </div> -->
                         <div role="form" class="js_surveyform" t-att-name="'%s' % (survey.id)" t-att-data-prefill="'/survey/prefill/%s/%s' % (slug(survey), token)">
@@ -369,7 +370,7 @@
                                 <tr>
                                     <th></th>
                                     <th t-foreach="question.labels_ids" t-as="col_label">
-                                        <span t-field="col_label.value" />
+                                        <span t-field="col_label.value" data-id="col_label.id"/>
                                     </th>
                                 </tr>
                             </thead>
@@ -383,10 +384,15 @@
                                 </t>
                                 <td t-foreach="question.labels_ids" t-as="col_label">
                                     <t t-if="'%s_%s_%s' % (prefix, row_label.id, col_label.id) in ret">
-                                        <textarea class="form-control" rows="3" t-att-name="'%s_%s_%s' % (prefix, row_label.id, col_label.id)" t-esc="ret['%s_%s_%s' % (prefix, row_label.id, col_label.id)][0]"></textarea>
+                                        <t t-if="is_pdf">
+                                            <t t-esc="ret['%s_%s_%s' % (prefix, row_label.id, col_label.id)][0]"/>
+                                        </t>
+                                        <t t-if="not is_pdf">
+                                            <textarea class="form-control" rows="3" t-att-name="'%s_%s_%s' % (prefix, row_label.id, col_label.id)" t-esc="ret['%s_%s_%s' % (prefix, row_label.id, col_label.id)][0]"></textarea>
+                                        </t>
                                     </t>
                                     <t t-if="not ('%s_%s_%s' % (prefix, row_label.id, col_label.id) in ret)">
-                                        <textarea class="form-control" rows="3" t-att-name="'%s_%s_%s' % (prefix, row_label.id, col_label.id)"></textarea>
+                                        <textarea class="form-control" rows="3" t-att-name="'%s_%s_%s' % (prefix, row_label.id, col_label.id)" t-if="not is_pdf"></textarea>
                                     </t>
                                     <!-- <textarea class="form-control" rows="3" t-att-name="'%s_%s_%s' % (prefix, row_label.id, col_label.id)"/> -->
                                 </td>
