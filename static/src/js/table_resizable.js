@@ -6,7 +6,7 @@ $(function () {
         maxHeight: thHeight,
         minWidth: 40,
         resize: function (event, ui) {
-            var sizerID = ".table" + "-sizer";
+            var sizerID = '.table' + "-sizer";
             $(sizerID).width(ui.size.width);
         }
     });

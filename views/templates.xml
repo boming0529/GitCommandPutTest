@@ -58,9 +58,22 @@
                     <t t-set="token" t-value="user_inputs.token"/>
                     <t t-set="quizz_correction" t-value="True if survey.quizz_mode and token else False"/>
                     <t t-set="pdf_print" t-value="True"/>
-                    <t t-set="ret" t-value="user_inputs.get_the_answer(token)"/>
+                    <t t-set="ret" t-value="user_inputs.get_the_answer(token,None)"/>
                     <t t-set="is_pdf" t-value="True"/>
-                    <div class="page container-fluid">
+                    <div class="page container">
+                        <style>
+                            .s_matrix_text .table th {
+                                word-wrap: break-word;
+                                word-break: break-all; }
+                                .s_matrix_text .table th span {
+                                    word-wrap: break-word;
+                                    word-break: break-all; }
+
+                                .s_matrix_text .table td {
+                                word-wrap: break-word;
+                                word-break: break-all; }
+                        </style>
+                        <link href="/survey_extend/static/src/css/survey_input.css" rel="stylesheet"/>
                         <!-- <script>function test() { var ele = document.getElementById('demo'); ele.innerHTML += 'howdy !!'; } new test();</script><style>#demo { color : limegreen; }</style><div id="demo" onload="test()">michael </div> -->
                         <div role="form" class="js_surveyform" t-att-name="'%s' % (survey.id)" t-att-data-prefill="'/survey/prefill/%s/%s' % (slug(survey), token)">
                             <t t-foreach="survey.page_ids" t-as="page">
@@ -90,7 +103,7 @@
                                                 </t>
                                                 <t t-set="answers" t-value="question.get_answer(ret, prefix)"/>
                                                 <t t-if="answers and question.description_question">
-                                                    <t t-raw="question.override_render_description(question.id,prefix, answers, true)"/></t>
+                                                    <t t-raw="question.override_render_description(question.id,prefix, answers)"/></t>
                                                 <t t-if="not (answers and question.description_question)">
                                                     <div t-field="question.description_question" class="">
                                                         <t t-if="question.type == 'free_text'">
@@ -364,14 +377,17 @@
         <section class="s_matrix_text">
             <div class="row">
                 <div class="col-md-12">
-                    <table class="table table-hover">
+                    <table  class="table table-hover">
+                    <!-- t-att-id="'survey_%s' %(prefix)" -->
                         <t t-if="question.display_filter in ('column', 'all')">
                             <thead>
                                 <tr>
                                     <th></th>
-                                    <th t-foreach="question.labels_ids" t-as="col_label">
-                                        <span t-field="col_label.value" data-id="col_label.id"/>
-                                    </th>
+                                    <t t-foreach="question.labels_ids" t-as="col_label">
+                                        <th t-att-data-id="col_label.id">
+                                            <span t-field="col_label.value" />
+                                        </th>
+                                    </t>
                                 </tr>
                             </thead>
                         </t>
@@ -382,20 +398,21 @@
                                         <span t-field="row_label.value" />
                                     </th>
                                 </t>
-                                <td t-foreach="question.labels_ids" t-as="col_label">
-                                    <t t-if="'%s_%s_%s' % (prefix, row_label.id, col_label.id) in ret">
-                                        <t t-if="is_pdf">
-                                            <t t-esc="ret['%s_%s_%s' % (prefix, row_label.id, col_label.id)][0]"/>
+                                <t t-foreach="question.labels_ids" t-as="col_label">
+                                    <td style="word-break: break-all;">
+                                        <t t-if="'%s_%s_%s' % (prefix, row_label.id, col_label.id) in ret">
+                                            <t t-if="is_pdf">
+                                                <t t-esc="ret['%s_%s_%s' % (prefix, row_label.id, col_label.id)][0]"/></t>
+                                            <t t-if="not is_pdf">
+                                                <textarea class="form-control" rows="3" t-att-name="'%s_%s_%s' % (prefix, row_label.id, col_label.id)" t-esc="ret['%s_%s_%s' % (prefix, row_label.id, col_label.id)][0]"></textarea>
+                                            </t>
                                         </t>
-                                        <t t-if="not is_pdf">
-                                            <textarea class="form-control" rows="3" t-att-name="'%s_%s_%s' % (prefix, row_label.id, col_label.id)" t-esc="ret['%s_%s_%s' % (prefix, row_label.id, col_label.id)][0]"></textarea>
+                                        <t t-if="not ('%s_%s_%s' % (prefix, row_label.id, col_label.id) in ret)">
+                                            <textarea class="form-control" rows="3" t-att-name="'%s_%s_%s' % (prefix, row_label.id, col_label.id)" t-if="not is_pdf"></textarea>
                                         </t>
-                                    </t>
-                                    <t t-if="not ('%s_%s_%s' % (prefix, row_label.id, col_label.id) in ret)">
-                                        <textarea class="form-control" rows="3" t-att-name="'%s_%s_%s' % (prefix, row_label.id, col_label.id)" t-if="not is_pdf"></textarea>
-                                    </t>
-                                    <!-- <textarea class="form-control" rows="3" t-att-name="'%s_%s_%s' % (prefix, row_label.id, col_label.id)"/> -->
-                                </td>
+                                        <!-- <textarea class="form-control" rows="3" t-att-name="'%s_%s_%s' % (prefix, row_label.id, col_label.id)"/> -->
+                                    </td>
+                                </t>
                             </tr>
                         </tbody>
                     </table>

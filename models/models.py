@@ -14,7 +14,7 @@ class SurveyExtends(models.Model):
     description_question = fields.Html('Content_question', sanitize=False)
 
     @api.multi
-    def override_render_description(self, question_id, answer_tag, answer, IsPrint):
+    def override_render_description(self, question_id, answer_tag, answer):
         """Re-render the HTML of the description
         Decorators:
             api.multi
@@ -60,17 +60,32 @@ class SurveyExtends(models.Model):
         if question.type == "matrix_text":
             for row_label in question.labels_ids_2:
                 for col_label in question.labels_ids:
-                    string = str(answer['%s_% s_%s' % (
-                        answer_tag, row_label.id, col_label.id)][0]) if \
-                        '%s_% s_%s' % (answer_tag, row_label.id, col_label.id) in answer else ''
-                    parent = soup.find('',
-                                       {'name': '%s_%s_%s' % (answer_tag, row_label.id, col_label.id)}).parent
-                    parent.string = string
-                    width = soup.find('th', {'data-id': col_label.id})['style'] if \
-                        soup.find('th', {'data-id': col_label.id}) else ''
-                    print(parent)
-                    print(width)
-                    parent['style'] = "word-break: break-all; %s" % width
+                    if '%s_%s_%s' % (answer_tag, row_label.id, col_label.id) in answer:
+                        string = str(answer['%s_%s_%s' % (
+                            answer_tag, row_label.id, col_label.id)][0])
+                        _parent = soup.find('',
+                                            {'name': '%s_%s_%s' % (answer_tag, row_label.id, col_label.id)}).parent
+                        try:
+                            width = soup.find('th', {'data-id': col_label.id})['style'] if \
+                                soup.find('th', {'data-id': col_label.id}) else ''
+                            if width != '':
+                                _parent["style"] = 'word-break: break-all; %s' % (
+                                    width)
+                            soup.find('',
+                                      {'name': '%s_%s_%s' % (answer_tag, row_label.id, col_label.id)}).parent.string = string
+                        except:
+                            soup.find('',
+                                      {'name': '%s_%s_%s' % (answer_tag, row_label.id, col_label.id)}).parent.string = string
+                    else:
+                        _parent = soup.find('',
+                                            {'name': '%s_%s_%s' % (answer_tag, row_label.id, col_label.id)}).parent
+                        _parent.string = ''
+            try:
+                thspan = soup.find('thead').find('tr').find('th')['style']
+                for th in soup.find('tbody').find('tr').find_all('th'):
+                    th['style'] = thspan
+            except:
+                thspan = None
         return soup
 
     @api.multi
