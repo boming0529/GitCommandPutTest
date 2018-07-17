@@ -30,7 +30,7 @@ This README would normally document whatever steps are necessary to get your app
 
 ## UML diagrams
 
-You can render UML diagrams using [Mermaid](https://mermaidjs.github.io/). For example, this will produce a sequence diagram:
+You can render UML diagrams using [plantUML](http://plantuml.com/class-diagram). For example, class diagram:
 
 ### demo UML
 ![demo uml](./test/doc/classDiagram.png)
