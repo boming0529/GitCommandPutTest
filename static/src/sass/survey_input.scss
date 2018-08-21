@@ -1,0 +1,25 @@
+@mixin Bottom_line_contorl($color: #DDD) {
+    border: none;
+    box-shadow: none;
+    border-radius: 0px;
+    border-bottom: 1px $color solid;
+}
+
+.s_free_text textarea {
+    @include Bottom_line_contorl();
+}
+
+.s_matrix_text .table {
+    th {
+        word-wrap: break-word;
+        word-break: break-all;
+        span {
+            word-wrap: break-word;
+            word-break: break-all;
+        }
+    }
+    td {
+        word-wrap: break-word;
+        word-break: break-all;
+    }
+}

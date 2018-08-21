@@ -1,0 +1,429 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <template id="survey_print" inherit_id="survey.survey_print">
+        <xpath expr="//t[@t-call='survey.back']" position="after">
+            <t t-call="survey_extend.print"/>
+        </xpath>
+    </template>
+    <template id="print">
+        <div groups="base.group_website_publisher" t-ignore="true" class="pull-right">
+            <a t-if="not token" t-attf-href="/survey_extend/print/#{slug(survey)}" class="btn btn-default">Print</a>
+            <a t-if="token" t-attf-href="/survey_extend/print/#{slug(survey)}/#{token}" class="btn btn-default">Print</a>
+        </div>
+    </template>
+    <!-- Survey.survey -->
+    <report id="survey_report" model="survey.survey" string="Etiquette Produit" report_type="qweb-pdf" file="survey_extend.survey_report_print" name="survey_extend.survey_report_print" />
+    <!-- Survey Report -->
+    <template id="survey_report_print">
+        <t t-call="report.html_container">
+            <t t-set="data_report_margin_top" t-value="45"/>
+            <t t-set="data_report_header_spacing" t-value="40"/>
+            <t t-call="report.external_layout">
+                <t t-foreach="docs" t-as="survey">
+                    <t t-set="pdf_print" t-value="False"/>
+                    <div class="page container-fluid">
+                        <div role="form" class="js_surveyform" t-att-name="'%s' % (survey.id)" t-att-data-prefill="'/survey/prefill/%s/%s' % (slug(survey), token)">
+                            <t t-foreach="survey.page_ids" t-as="page">
+                                <div class="row">
+                                    <div class="col-md-12 col-xs-12 col-ms-12">
+                                        <div class="page-header">
+                                            <h1 t-field='page.title' />
+                                            <t t-if="page.description">
+                                                <div t-field='page.description' class="oe_no_empty"/>
+                                            </t>
+                                        </div>
+                                        <t t-foreach='page.question_ids' t-as='question'>
+                                            <t t-set="prefix" t-value="'%s_%s_%s' % (survey.id, page.id, question.id)"/>
+                                            <t t-call="survey_extend.survey_template_body" class=""/>
+                                            <hr/>
+                                        </t>
+                                    </div>
+                                </div>
+                            </t>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+    <!-- Survey user input -->
+    <report id="survey_user_report" model="survey.user_input" string="Etiquettes Produit" report_type="qweb-pdf" file="survey_extend.survey_report_user_print" name="survey_extend.survey_report_user_print" />
+    <template id="survey_report_user_print">
+        <t t-call="report.html_container">
+            <t t-set="data_report_margin_top" t-value="45"/>
+            <t t-set="data_report_header_spacing" t-value="40"/>
+            <t t-call="report.external_layout">
+                <t t-foreach="docs" t-as="user_inputs">
+                    <t t-set="survey" t-value="user_inputs.survey_id"/>
+                    <t t-set="token" t-value="user_inputs.token"/>
+                    <t t-set="quizz_correction" t-value="True if survey.quizz_mode and token else False"/>
+                    <t t-set="pdf_print" t-value="True"/>
+                    <t t-set="ret" t-value="user_inputs.get_the_answer(token,None)"/>
+                    <t t-set="is_pdf" t-value="True"/>
+                    <div class="page container">
+                        <style>
+                            .s_matrix_text .table th {
+                                word-wrap: break-word;
+                                word-break: break-all; }
+                                .s_matrix_text .table th span {
+                                    word-wrap: break-word;
+                                    word-break: break-all; }
+
+                                .s_matrix_text .table td {
+                                word-wrap: break-word;
+                                word-break: break-all; }
+                        </style>
+                        <link href="/survey_extend/static/src/css/survey_input.css" rel="stylesheet"/>
+                        <!-- <script>function test() { var ele = document.getElementById('demo'); ele.innerHTML += 'howdy !!'; } new test();</script><style>#demo { color : limegreen; }</style><div id="demo" onload="test()">michael </div> -->
+                        <div role="form" class="js_surveyform" t-att-name="'%s' % (survey.id)" t-att-data-prefill="'/survey/prefill/%s/%s' % (slug(survey), token)">
+                            <t t-foreach="survey.page_ids" t-as="page">
+                                <div class="row">
+                                    <div class="col-md-12 col-xs-12 col-ms-12">
+                                        <div class="page-header">
+                                            <h1 t-field='page.title' />
+                                            <t t-if="page.description">
+                                                <div t-field='page.description' class="oe_no_empty"/>
+                                            </t>
+                                        </div>
+                                        <t t-foreach='page.question_ids' t-as='question'>
+                                            <t t-set="prefix" t-value="'%s_%s_%s' % (survey.id, page.id, question.id)"/>
+                                            <div class="js_question-wrapper" t-att-id="prefix">
+                                                <div t-field='question.description_before' class="oe_no_empty"/>
+                                                <div class="row">
+                                                    <div class="col-md-12">
+                                                        <h2>
+                                                            <span t-field='question.question' />
+                                                            <span t-if="question.constr_mandatory" class="text-danger">*</span>
+                                                            <span t-if="quizz_correction" class="badge" t-att-data-score-question="question.id"></span>
+                                                        </h2>
+                                                    </div>
+                                                </div>
+                                                <t t-if="question.description">
+                                                    <div class="oe_no_empty" t-field='question.description'/>
+                                                </t>
+                                                <t t-set="answers" t-value="question.get_answer(ret, prefix)"/>
+                                                <t t-if="answers and question.description_question">
+                                                    <t t-raw="question.override_render_description(question.id,prefix, answers)"/></t>
+                                                <t t-if="not (answers and question.description_question)">
+                                                    <div t-field="question.description_question" class="">
+                                                        <t t-if="question.type == 'free_text'">
+                                                            <t t-call="survey_extend.free_text"/></t>
+                                                        <t t-if="question.type == 'textbox'">
+                                                            <t t-call="survey_extend.textbox"/></t>
+                                                        <t t-if="question.type == 'numerical_box'">
+                                                            <t t-call="survey_extend.numerical_box"/></t>
+                                                        <t t-if="question.type == 'datetime'">
+                                                            <t t-call="survey_extend.datetime"/></t>
+                                                        <t t-if="question.type == 'simple_choice'">
+                                                            <t t-call="survey_extend.simple_choice"/></t>
+                                                        <t t-if="question.type == 'multiple_choice'">
+                                                            <t t-call="survey_extend.multiple_choice"/></t>
+                                                        <t t-if="question.type == 'matrix'">
+                                                            <t t-call="survey_extend.matrix"/></t>
+                                                        <t t-if="question.type == 'matrix_text'">
+                                                            <t t-call="survey_extend.matrix_text"/></t>
+                                                    </div>
+                                                </t>
+                                                <div class="js_errzone alert alert-danger" style="display:none;"></div>
+                                                <div t-field='question.description_after' class="oe_no_empty"/></div>
+                                            <hr/>
+                                        </t>
+                                    </div>
+                                </div>
+                            </t>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+    <!-- <template id="answer_value"><t t-set="value_text" t-value="None"/><t t-set="value_number" t-value="None"/><t t-set="free_text_value" t-value="None"/><t t-set="value_date" t-value="None"/><t t-set="value_suggested" t-value="None"/><t t-set=""><t t-if="pdf_print"><t t-foreach="user_inputs.user_input_line_ids" t-as="answer"><t t-if="not answer.skipped"><t t-if="answer.answer_type == 'free_text'"><t t-set="free_text_value" t-value="answer.value_free_text"/></t><t t-if="answer.answer_type == 'text' and answer.question_id.type == 'textbox'"><t t-set="value_text" t-value="answer.value_text"/></t><t t-if="answer.answer_type == 'text' and answer.question_id.type != 'textbox'"><t t-set="value_text" t-value="answer.value_text"/></t><t t-if="answer.answer_type == 'number'"><t t-set="value_number" t-value="answer.value_number"/></t><t t-if="answer.answer_type == 'date'"><t t-set="value_date" t-value="answer.value_date"/></t><t t-if="answer.answer_type == 'suggestion' and not answer.value_suggested_row"><t t-set="value_suggested" t-value="answer.value_suggested.id"/></t><t t-if="answer.answer_type == 'suggestion' and answer.value_suggested_row"><t t-set="value_suggested" t-value="answer.value_suggested.id"/></t></t></t></t></t></template> -->
+    <!--Design Survey-->
+    <template id="survey_design_page_extend" inherit_id="survey.page">
+        <xpath expr="//div[@t-att-id='prefix']" position="replace">
+            <t t-set="pdf_print" t-value="False"/>
+            <t t-call="survey_extend.survey_template_body"/>
+        </xpath>
+    </template>
+    <template id="survey_print_page_extend" inherit_id="survey.survey_print">
+        <xpath expr="//div[@t-att-id='prefix']" position="replace">
+            <t t-set="pdf_print" t-value="False"/>
+            <t t-call="survey_extend.survey_template_body"/>
+        </xpath>
+    </template>
+    <!-- Survey Temple -->
+    <template id="survey_template_body">
+        <t t-set="ret" t-value="{}"/>
+        <div class="js_question-wrapper" t-att-id="prefix">
+            <div t-field='question.description_before' class="oe_no_empty"/>
+            <h2>
+                <span t-field='question.question' />
+                <span t-if="question.constr_mandatory" class="text-danger">*</span>
+                <span t-if="quizz_correction" class="badge" t-att-data-score-question="question.id"></span>
+            </h2>
+            <t t-if="question.description">
+                <div class="oe_no_empty" t-field='question.description'/>
+            </t>
+            <div t-field="question.description_question" class="">
+                <t t-if="question.type == 'free_text'">
+                    <t t-call="survey_extend.free_text"/></t>
+                <t t-if="question.type == 'textbox'">
+                    <t t-call="survey_extend.textbox"/></t>
+                <t t-if="question.type == 'numerical_box'">
+                    <t t-call="survey_extend.numerical_box"/></t>
+                <t t-if="question.type == 'datetime'">
+                    <t t-call="survey_extend.datetime"/></t>
+                <t t-if="question.type == 'simple_choice'">
+                    <t t-call="survey_extend.simple_choice"/></t>
+                <t t-if="question.type == 'multiple_choice'">
+                    <t t-call="survey_extend.multiple_choice"/></t>
+                <t t-if="question.type == 'matrix'">
+                    <t t-call="survey_extend.matrix"/></t>
+                <t t-if="question.type == 'matrix_text'">
+                    <t t-call="survey_extend.matrix_text"/></t>
+            </div>
+            <div class="js_errzone alert alert-danger" style="display:none;"></div>
+            <div t-field='question.description_after' class="oe_no_empty"/></div>
+    </template>
+    <!-- Question widgets -->
+    <template id="free_text" name="Free text box">
+        <section class="s_free_text">
+            <div class="container">
+                <div class="row">
+                    <!-- <div class="col-md-1 mb0 mt0"></div> -->
+                    <div class="col-md-12 mb0 mt0">
+                        <t t-if="prefix in ret">
+                            <textarea class="form-control" rows="3" t-att-name="prefix" t-esc="ret[prefix][0]"></textarea>
+                        </t>
+                        <t t-if="not (prefix in ret)">
+                            <textarea class="form-control" rows="3" t-att-name="prefix"></textarea>
+                        </t>
+                    </div>
+                    <!-- <div class="col-md-1 mb0 mt0"></div> -->
+                </div>
+            </div>
+        </section>
+    </template>
+    <template id="textbox" name="Text box">
+        <section class="s_textbox">
+            <div class="container">
+                <div class="row">
+                    <!-- <div class="col-md-1 mb0 mt0"></div> -->
+                    <div class="col-md-12 mb0 mt0">
+                        <input type="text" class="form-control" t-att-name="prefix" t-att-value="ret[prefix][0] if prefix in ret else ''"/>
+                        <!-- <input type="text" class="form-control" t-att-name="prefix"/> -->
+                    </div>
+                    <!-- <div class="col-md-1 mb0 mt0"></div> -->
+                </div>
+            </div>
+        </section>
+    </template>
+    <template id="numerical_box" name="Numerical box">
+        <section class="s_numerical_box">
+            <div class="container">
+                <div class="row">
+                    <!-- <div class="col-md-1 mb0 mt0"></div> -->
+                    <div class="col-md-12 mb0 mt0">
+                        <input type="number" step="any" class="form-control" t-att-name="prefix" t-att-value="ret[prefix][0] if prefix in ret else ''"/>
+                    </div>
+                    <!-- <div class="col-md-1 mb0 mt0"></div> -->
+                </div>
+            </div>
+        </section>
+    </template>
+    <template id="datetime" name="Datetime box">
+        <section class="s_datetimebox">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-12 mb0 mt0">
+                        <div class='input-group date'>
+                            <input type="text" class="form-control" data-date-format="YYYY-MM-DD hh:mm:ss" t-att-name="prefix" placeholder="YYYY-MM-DD hh:mm:ss" t-att-value="ret[prefix][0] if prefix in ret else ''" />
+                            <span class="input-group-addon">
+                                <span class="fa fa-calendar"></span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </template>
+    <template id="simple_choice" name="Simple choice">
+        <section class="s_simple_choice">
+            <div t-if="question.display_mode == 'dropdown' and token" class="js_drop row">
+                <div class="col-md-12">
+                    <select class="form-control" t-att-name="prefix">
+                        <option t-if="not (prefix in ret)" disabled="1" selected="1" value="">Choose...</option>
+                        <option t-if="prefix in ret" disabled="1" value="">Choose...</option>
+                        <t t-foreach='question.labels_ids' t-as='label'>
+                            <t t-if="prefix in ret">
+                                <option t-att-value='label.id' t-if="ret[prefix][0] == label.id" selected="1">
+                                    <t t-esc='label.value' />
+                                </option>
+                                <option t-att-value='label.id' t-if="ret[prefix][0] != label.id">
+                                    <t t-esc='label.value' />
+                                </option>
+                            </t>
+                            <option t-att-value='label.id' t-if="not (prefix in ret)">
+                                <t t-esc='label.value' />
+                            </option>
+                        </t>
+                        <t t-if='question.comments_allowed and question.comment_count_as_answer'>
+                            <option class="js_other_option" value="-1">
+                                <span t-esc="question.comments_message" />
+                            </option>
+                        </t>
+                    </select>
+                </div>
+                <div t-if='question.comments_allowed and question.comment_count_as_answer' class="col-md-6">
+                    <input type="text" class="form-control" t-att-name="'%s_%s' % (prefix, 'comment')" data-oe-survey-othert="1"/>
+                </div>
+                <div t-if='question.comments_allowed and not question.comment_count_as_answer' class="col-md-12 mt16">
+                    <span t-field="question.comments_message"/>
+                    <input type="text" class="form-control" t-att-name="'%s_%s' % (prefix, 'comment')"/>
+                </div>
+            </div>
+            <div t-if="question.display_mode == 'columns' or not token" class="row js_radio">
+                <div t-foreach='question.labels_ids' t-as='label' t-attf-class="col-md-#{question.column_nb}">
+                    <label t-att-class="' bg-success ' if quizz_correction and label.quizz_mark > 0.0 else ''">
+                        <input type="radio" t-att-name="prefix" t-att-value='label.id' t-if="not (prefix in ret)"/>
+                        <t t-if="prefix in ret">
+                            <input type="radio" t-att-name="prefix" t-att-value='label.id' t-if="ret[prefix][0] == label.id" checked="checked"/>
+                            <input type="radio" t-att-name="prefix" t-att-value='label.id' t-if="ret[prefix][0] != label.id"/>
+                        </t>
+                        <span t-field='label.value'/>
+                    </label>
+                </div>
+                <div t-if='question.comments_allowed and question.comment_count_as_answer' class="js_comments col-md-12">
+                    <label>
+                        <input type="radio" t-att-name="prefix" value="-1"/>
+                        <span t-field="question.comments_message" />
+                    </label>
+                    <input type="text" class="form-control" t-att-name="'%s_%s' % (prefix, 'comment')"/>
+                </div>
+                <div t-if='question.comments_allowed and not question.comment_count_as_answer' class="col-md-12">
+                    <span t-field="question.comments_message"/>
+                    <input type="text" class="form-control" t-att-name="'%s_%s' % (prefix, 'comment')" data-oe-survey-othert="1"/>
+                </div>
+            </div>
+        </section>
+    </template>
+    <template id="multiple_choice" name="Multiple choice">
+        <section class="s_multiple_choice">
+            <div class="row">
+                <div t-foreach='question.labels_ids' t-as='label' t-attf-class="col-md-#{question.column_nb}">
+                    <label t-att-class="' bg-success ' if quizz_correction and label.quizz_mark > 0.0 else ''">
+                        <input type="checkbox" t-att-name="'%s_%s' % (prefix, label.id)" t-att-value='label.id' t-if="not (prefix in ret)" />
+                        <t t-if="prefix in ret">
+                            <input type="checkbox" t-att-name="'%s_%s' % (prefix, label.id)" t-att-value='label.id' t-if="[ x for x in ret[prefix] if x == label.id ]" checked="checked"/>
+                            <input type="checkbox" t-att-name="'%s_%s' % (prefix, label.id)" t-att-value='label.id' t-if="not [ x for x in ret[prefix] if x == label.id ]"/>
+                        </t>
+                        <span t-field='label.value'/>
+                    </label>
+                </div>
+                <div t-if='question.comments_allowed and question.comment_count_as_answer' class="js_ck_comments col-md-12">
+                    <label>
+                        <input type="checkbox" t-att-name="'%s_%s' % (prefix, -1)" value="-1" />
+                        <span t-field="question.comments_message" />
+                    </label>
+                    <input type="text" class="form-control" t-att-name="'%s_%s' % (prefix, 'comment')"/>
+                </div>
+                <div t-if='question.comments_allowed and not question.comment_count_as_answer' class="col-md-12">
+                    <span t-field="question.comments_message"/>
+                    <input type="text" class="form-control" t-att-name="'%s_%s' % (prefix, 'comment')" data-oe-survey-othert="1"/>
+                </div>
+            </div>
+        </section>
+    </template>
+    <template id="matrix" name="Matrix">
+        <section class="s_matrix">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th t-foreach="question.labels_ids" t-as="col_label">
+                            <span t-field="col_label.value" />
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr t-foreach="question.labels_ids_2" t-as="row_label">
+                        <th>
+                            <span t-field="row_label.value" />
+                        </th>
+                        <td t-foreach="question.labels_ids" t-as="col_label">
+                            <input type="radio" t-att-name="'%s_%s' % (prefix, row_label.id)" t-att-value='col_label.id' t-if="not ('%s_%s' % (prefix, row_label.id) in ret) and question.matrix_subtype == 'simple'"/>
+                            <t t-if="'%s_%s' % (prefix, row_label.id) in ret">
+                                <input type="radio" t-att-name="'%s_%s' % (prefix, row_label.id)" t-att-value='col_label.id' t-if="ret['%s_%s' % (prefix, row_label.id)][0] == col_label.id and question.matrix_subtype == 'simple'" checked="checked"/>
+                                <input type="radio" t-att-name="'%s_%s' % (prefix, row_label.id)" t-att-value='col_label.id' t-if="ret['%s_%s' % (prefix, row_label.id)][0] != col_label.id and question.matrix_subtype == 'simple'"/>
+                            </t>
+                            <input type="checkbox" t-att-name="'%s_%s_%s' % (prefix, row_label.id, col_label.id)" t-att-value='col_label.id' t-if="not ('%s_%s' % (prefix, row_label.id) in ret) and question.matrix_subtype == 'multiple'" />
+                            <t t-if="'%s_%s' % (prefix, row_label.id) in ret">
+                                <input type="checkbox" t-att-name="'%s_%s_%s' % (prefix, row_label.id, col_label.id)" t-att-value='col_label.id' t-if="[ x for x in ret['%s_%s' % (prefix, row_label.id)] if x == col_label.id ] and question.matrix_subtype == 'multiple'" checked="checked"/>
+                                <input type="checkbox" t-att-name="'%s_%s_%s' % (prefix, row_label.id, col_label.id)" t-att-value='col_label.id' t-if="not [ x for x in ret['%s_%s' % (prefix, row_label.id)] if x == col_label.id ] and question.matrix_subtype == 'multiple'"/>
+                            </t>
+                            <!-- <input t-if="question.matrix_subtype == 'simple'" type="radio" t-att-name="'%s_%s' % (prefix, row_label.id)" t-att-value='col_label.id' /> -->
+                            <!-- <input t-if="question.matrix_subtype == 'multiple'" type="checkbox" t-att-name="'%s_%s_%s' % (prefix, row_label.id, col_label.id)" t-att-value='col_label.id' /> -->
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <div t-if='question.comments_allowed'>
+                <span t-field="question.comments_message"/>
+                <input type="text" class="form-control" t-att-name="'%s_%s' % (prefix, 'comment')" />
+            </div>
+        </section>
+    </template>
+    <template id="matrix_text" name="Matrix_Text">
+        <section class="s_matrix_text">
+            <div class="row">
+                <div class="col-md-12">
+                    <table  class="table table-hover">
+                    <!-- t-att-id="'survey_%s' %(prefix)" -->
+                        <t t-if="question.display_filter in ('column', 'all')">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <t t-foreach="question.labels_ids" t-as="col_label">
+                                        <th t-att-data-id="col_label.id">
+                                            <span t-field="col_label.value" />
+                                        </th>
+                                    </t>
+                                </tr>
+                            </thead>
+                        </t>
+                        <tbody>
+                            <tr t-foreach="question.labels_ids_2" t-as="row_label">
+                                <t t-if="question.display_filter in ('row', 'all')">
+                                    <th>
+                                        <span t-field="row_label.value" />
+                                    </th>
+                                </t>
+                                <t t-foreach="question.labels_ids" t-as="col_label">
+                                    <td style="word-break: break-all;">
+                                        <t t-if="'%s_%s_%s' % (prefix, row_label.id, col_label.id) in ret">
+                                            <t t-if="is_pdf">
+                                                <t t-esc="ret['%s_%s_%s' % (prefix, row_label.id, col_label.id)][0]"/></t>
+                                            <t t-if="not is_pdf">
+                                                <textarea class="form-control" rows="3" t-att-name="'%s_%s_%s' % (prefix, row_label.id, col_label.id)" t-esc="ret['%s_%s_%s' % (prefix, row_label.id, col_label.id)][0]"></textarea>
+                                            </t>
+                                        </t>
+                                        <t t-if="not ('%s_%s_%s' % (prefix, row_label.id, col_label.id) in ret)">
+                                            <textarea class="form-control" rows="3" t-att-name="'%s_%s_%s' % (prefix, row_label.id, col_label.id)" t-if="not is_pdf"></textarea>
+                                        </t>
+                                        <!-- <textarea class="form-control" rows="3" t-att-name="'%s_%s_%s' % (prefix, row_label.id, col_label.id)"/> -->
+                                    </td>
+                                </t>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div t-if='question.comments_allowed'>
+                <span t-field="question.comments_message"/>
+                <input type="text" class="form-control" t-att-name="'%s_%s' % (prefix, 'comment')" />
+            </div>
+        </section>
+    </template>
+    <!--JS-->
+    <!-- <template id="custom_table_size" inherit_id="website.snippet_options"><xpath expr="." position="inside"><div data-js="custom_table_size" data-snippet-option-id="matrix_text" data-selector=".cst"></div></xpath></template> -->
+</odoo>

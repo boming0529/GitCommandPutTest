@@ -1,0 +1,16 @@
+.s_free_text textarea {
+  border: none;
+  box-shadow: none;
+  border-radius: 0px;
+  border-bottom: 1px #DDD solid; }
+
+.s_matrix_text .table th {
+  word-wrap: break-word;
+  word-break: break-all; }
+  .s_matrix_text .table th span {
+    word-wrap: break-word;
+    word-break: break-all; }
+
+.s_matrix_text .table td {
+  word-wrap: break-word;
+  word-break: break-all; }
